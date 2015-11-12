@@ -7,15 +7,27 @@
 #include <time.h>
 
 const char *man[] = { " O\n", "/", "|", "\\\n", " /", "\\\n"};
+typedef struct {
+	int games;
+	int wins;
+	int guesses;
+} stats;
 
 void get_word(FILE *file, char *secret);
+void readwrite_stats(stats *stats, const char *mode);
 void clear_screen();
 
 int main(int argc, char **argv)
 {
+	// testing readwrite_stats
+	stats *stats = malloc(sizeof(stats));;
+	readwrite_stats(stats, "r");
+	stats->games++;
+	printf("%i games, %i wins, %i guesses\n", stats->games, stats->wins, stats->guesses);
 	srand(time(NULL));
-	char *homedir = getenv("HOME");
-	const char *word_file = argc > 1 ? argv[1] : strcat(homedir, "/.words");
+	char homedir[50];
+	strncpy(homedir, getenv("HOME"), sizeof(homedir));
+	const char *word_file = argc > 1 ? argv[1] : strncat(homedir, "/.words", sizeof(homedir));
 	printf("using %s\n", word_file); //REMOVE
 	FILE *words = fopen(word_file, "r");
 	if(!words) {
@@ -41,6 +53,7 @@ int main(int argc, char **argv)
 	}
 
 	int wrong = 0;
+	int guesses = 0;
 	while(wrong < 6)
 	{
 		clear_screen();
@@ -56,6 +69,7 @@ int main(int argc, char **argv)
 		printf("\nGuess: ");
 		char c = getchar();
 		if(c < 'A' || (c > 'Z' && c < 'a') || c > 'z') continue;
+		guesses++;
 		c -= (c >= 'a' && c <= 'z') ? 32 : 0; // Capitalize the guess
 		used[c-65]++;
 		char n;
@@ -80,11 +94,14 @@ int main(int argc, char **argv)
 				else printf("%c ", known[i] ? secret[i] : '_');
 			}
 			printf("\nYou win!\n");
+			stats->wins++;
 			return 0;
 		}
 		// update stats
+		stats->guesses += guesses;
+		readwrite_stats(stats, "w");
 	}
-	printf("You lose!\n");
+	printf("You lose! The answer was %s\n", secret);
 }
 
 void get_word(FILE *file, char *secret)
@@ -117,6 +134,27 @@ void get_word(FILE *file, char *secret)
 		double x = (double)rand() / (double)(RAND_MAX);
 		if(x < (1/(double)n)) strncpy(secret, word, 35);
 	}
+}
+
+/* File stores the following on one line
+ * <# of games> <# of wins> <# total guesses>
+ *
+ * function accepts pointer to stats structure and a file mode
+ * mode can be either "r" or "w"
+ */
+void readwrite_stats(stats *stats, const char *mode)
+{
+	char statfilename[50];;
+	strncpy(statfilename, getenv("HOME"), sizeof(statfilename));
+	strncat(statfilename, "/.hangman", sizeof(statfilename));
+	printf("file %s\n", statfilename);
+	FILE *statfile = fopen(statfilename, mode);
+	if(mode[0] == 'r') {
+		fscanf(statfile, "%i %i %i", &(stats->games), &(stats->wins), &(stats->guesses));
+	} else {
+		fprintf(statfile, "%i %i %i", stats->games, stats->wins, stats->guesses);
+	}
+	fclose(statfile);
 }
 
 /* Retrieved from: http://stackoverflow.com/a/17271828
