@@ -3,11 +3,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <termcap.h>
 #include <time.h>
 
 const char *man[] = { " O\n", "/", "|", "\\\n", " /", "\\\n"};
 
 void get_word(FILE *file, char *secret);
+void clear_screen();
 
 int main(int argc, char **argv)
 {
@@ -33,6 +35,7 @@ int main(int argc, char **argv)
 	
 
 }
+
 void get_word(FILE *file, char *secret)
 {
 	if(!file || !secret) return;
@@ -43,3 +46,16 @@ void get_word(FILE *file, char *secret)
 	printf("line count: %i\n", lines);
 //	int line_to_get = rand() % lines;
 }
+
+/* Retrieved from: http://stackoverflow.com/a/17271828
+*/
+void clear_screen()
+{
+	char buf[512];
+	char *str;
+	char cl[] = {'c','l','\0'};
+
+	tgetent(buf, getenv("TERM"));
+	str = tgetstr(cl, NULL);
+	fputs(str, stdout);
+} 
