@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,13 +37,35 @@ int main(int argc, char **argv)
 
 void get_word(FILE *file, char *secret)
 {
-	if(!file || !secret) return;
-//	char word[36] = {'\0'};
-	int lines = 0;
-	char c;
-	while(EOF != (c=fgetc(file))) lines += (c == '\n');
-	printf("line count: %i\n", lines);
-//	int line_to_get = rand() % lines;
+    int n = 0;
+    char c;
+    char word[36] = {'\0'};
+    if(!file || !secret) return;
+    while(fgets(word, sizeof(word), file))
+	{
+        // word too long?
+        if(!word[strlen(word)-1] == '\n')
+        {
+            while('\n' != (c=getc(file))); //read until end of line
+            continue;
+        }
+        word[strlen(word)-1] = '\0';
+        // word only alphanumeric + spaces?
+        int i;
+        for(i=0; i < (int)strlen(word); i++)
+        {
+            if((word[i] != ' ' && word[i] < 'A') ||
+               (word[i] > 'Z' && word[i] < 'a') ||
+                word[i] > 'z')
+            {
+                 break;
+            }
+        }
+         n += (i == (int)(strlen(word)));
+        double x = (double)rand() / (double)(RAND_MAX);
+		if(x < (1/(double)n)) strncpy(secret, word, 35);
+	}
+	printf("word is %s\n", secret);
 }
 
 /* Retrieved from: http://stackoverflow.com/a/17271828
