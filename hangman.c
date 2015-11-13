@@ -1,10 +1,8 @@
-#include <curses.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <termcap.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -17,7 +15,6 @@ typedef struct {
 
 void get_word(FILE *file, char *secret);
 int readwrite_stats(stats *stats, const char *mode);
-void clear_screen();
 int finish_game(stats *stats);
 
 int main(int argc, char **argv)
@@ -46,7 +43,7 @@ int main(int argc, char **argv)
 		return errno;
 	}
 
-	stats *stats = malloc(sizeof(stats));;
+	stats *stats = malloc(sizeof(*stats));
 	err = readwrite_stats(stats, "r");
 	if(err) return err;
 
@@ -82,7 +79,7 @@ int main(int argc, char **argv)
 		printf("\nGuess: ");
 		char c = getchar();
 		while('\n' != getchar());
-		clear_screen();
+		if(system("clear") < 0) fprintf(stderr, "Error clearing screen.\n");
 
 		if(c < 'A' || (c > 'Z' && c < 'a') || c > 'z') continue;
 		guesses++;
@@ -157,7 +154,7 @@ void get_word(FILE *file, char *secret)
  * returns int
  *  < 0: system call error
  *    0: no error
- *  > 0: other error
+ *    1: invalid filemode argument ('r' or 'w' only).
  */
 int readwrite_stats(stats *stats, const char *mode)
 {
@@ -211,23 +208,12 @@ int readwrite_stats(stats *stats, const char *mode)
 	return err;
 }
 
-/* Retrieved from: http://stackoverflow.com/a/17271828
-*/
-void clear_screen()
-{
-	char buf[512];
-	char *str;
-	char cl[] = {'c','l','\0'};
-
-	tgetent(buf, getenv("TERM"));
-	str = tgetstr(cl, NULL);
-	fputs(str, stdout);
-} 
-
+/* Attempts to write game stats and deallocate
+ * Returns  */
 int finish_game(stats *stats)
 {
 	int err = readwrite_stats(stats, "w");
-	if(!err) return err;
+	if(err) return err;
 	free(stats);
 	return 0;
 }
