@@ -15,7 +15,7 @@ typedef struct {
 
 void get_word(FILE *file, char *secret);
 int readwrite_stats(stats *stats, const char *mode);
-int finish_game(stats *stats);
+int close_game(stats *stats);
 
 int main(int argc, char **argv)
 {
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	get_word(words, secret);
 	int secret_len = strlen(secret);
 	if(!secret_len) {
-		fprintf(stderr, "0 character string returned.\n");
+		fprintf(stderr, "Secret word chosen is 0 characters long!\n");
 		return 1;
 	}
 	if(EOF == fclose(words)) {
@@ -107,12 +107,12 @@ int main(int argc, char **argv)
 			stats->wins++;
 			stats->games++;
 			stats->guesses += guesses;
-			return finish_game(stats);
+			return close_game(stats);
 		}
 	}
 	printf("You lose! The answer was %s\n", secret);
 	stats->games++;
-	return finish_game(stats);
+	return close_game(stats);
 }
 
 void get_word(FILE *file, char *secret)
@@ -198,7 +198,7 @@ int readwrite_stats(stats *stats, const char *mode)
 			err = errno;
 		}
 	} else {
-		perror("Unknown file mode passed to readwrite_stats().");
+		fprintf(stderr, "Unknown file mode passed to readwrite_stats().\n");
 		return 1;
 	}
 	if(EOF == fclose(statfile))	{
@@ -208,9 +208,9 @@ int readwrite_stats(stats *stats, const char *mode)
 	return err;
 }
 
-/* Attempts to write game stats and deallocate
- * Returns  */
-int finish_game(stats *stats)
+/* Attempts to write game stats and deallocate stats structure
+ * Returns 0 on success or err from readwrite_stats() on failure */
+int close_game(stats *stats)
 {
 	int err = readwrite_stats(stats, "w");
 	if(err) return err;
