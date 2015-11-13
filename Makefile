@@ -2,7 +2,7 @@ CFLAGS=-std=c11 -Wall -Wextra -pedantic  -Werror -Wwrite-strings -Wfloat-equal -
 
 .PHONY: clean
 
-hangman: hangman.o -lncurses
+hangman: hangman.o
 
 debug: CFLAGS+=-g
 debug: hangman
