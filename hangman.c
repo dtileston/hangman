@@ -35,7 +35,7 @@ int main(int argc, char **argv)
 	get_word(words, secret);
 	int secret_len = strlen(secret);
 	if(!secret_len) {
-		// some error for 0 length word
+		fprintf(stderr, "0 character string returned.\n");
 		return 1;
 	}
 	if(EOF == fclose(words)) {
@@ -68,11 +68,10 @@ int main(int argc, char **argv)
 			if(secret[i] == ' ') printf("  ");
 			else printf("%c ", known[i] ? secret[i] : '_');
 		}
-		double avg = stats->games > 0 ? (double)stats->guesses/(double)stats->games : 0;
-		printf("\n%i Game%s\n%i Win%s\n%i Guess%s\n%.1f Avg. Guess%s per Game\n",
+		double avg = stats->wins > 0 ? (double)stats->guesses/(double)stats->wins : 0;
+		printf("\n%i Game%s\n%i Win%s\n%.1f Avg. Guess%s per Winning Game\n",
 				stats->games, stats->games == 1 ? "" : "s",
 				stats->wins, stats->wins == 1 ? "" : "s",
-				stats->guesses, stats->guesses == 1 ? "": "es",
 				avg, avg < 1 || avg > 1 ? "es": "");
 		printf("\nUsed: ");
 		for(int i=0; i < 26; i++) if(used[i]) printf("%c ", i+65);
@@ -83,7 +82,6 @@ int main(int argc, char **argv)
 
 		if(c < 'A' || (c > 'Z' && c < 'a') || c > 'z') continue;
 		guesses++;
-		stats->guesses++;
 		c -= (c >= 'a' && c <= 'z') ? 32 : 0; // Capitalize the guess
 		used[c-'A']++;
 				int flag = 0;
@@ -108,6 +106,7 @@ int main(int argc, char **argv)
 			printf("\nYou win!\n");
 			stats->wins++;
 			stats->games++;
+			stats->guesses += guesses;
 			return finish_game(stats);
 		}
 	}
@@ -124,9 +123,10 @@ void get_word(FILE *file, char *secret)
 	if(!file || !secret) return;
 	while(fgets(word, sizeof(word), file))
 	{
+		// word has no characters?
+		if(word[0] == '\n') continue;
 		// word too long?
-		if(!word[strlen(word)-1] == '\n')
-		{
+		if(!word[strlen(word)-1] == '\n') {
 			while('\n' != (c=getc(file))); //read until end of line	
 			continue;
 		}
